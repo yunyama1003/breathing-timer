@@ -35,3 +35,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# DB接続情報
+src/main/resources/application.properties
