@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>呼吸記録登録</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f8;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        form {
+            max-width: 400px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 6px;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            box-sizing: border-box;
+        }
+
+        button {
+            margin-top: 25px;
+            width: 100%;
+            padding: 10px;
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #357ab8;
+        }
+		.error {
+		    color: red;
+		    font-size: 0.9em;
+		    margin-top: 4px;
+		}
+    </style>
+</head>
+<body>
+
+<h1>呼吸記録 登録</h1>
+
+<form th:action="@{/breathing/save}" method="post">
+    <label>吸う（秒）</label>
+    <input type="number" name="inhaleSeconds" required>
+
+    <label>止める（秒）</label>
+    <input type="number" name="holdSeconds" required>
+
+    <label>吐く（秒）</label>
+    <input type="number" name="exhaleSeconds" required>
+
+    <label>回数</label>
+    <input type="number" name="cycleCount" required>
+
+    <button type="submit">保存してタイマーへ</button>
+</form>
+
+</body>
+</html>

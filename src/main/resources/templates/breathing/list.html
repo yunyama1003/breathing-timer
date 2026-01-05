@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>呼吸記録一覧</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f8;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        table {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            border-collapse: collapse;
+            background-color: #fff;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #ddd;
+            text-align: center;
+        }
+
+        th {
+            background-color: #4a90e2;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #eef3f8;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .new-button {
+            padding: 10px 20px;
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .new-button:hover {
+            background-color: #357ab8;
+        }
+
+        .timer-link {
+            color: #4a90e2;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        .timer-link:hover {
+            color: #357ab8;
+        }
+    </style>
+</head>
+<body>
+
+<h1>呼吸記録一覧</h1>
+
+<div class="container">
+    <a th:href="@{/breathing/new}" class="new-button">新規記録</a>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>吸う（秒）</th>
+            <th>止める（秒）</th>
+            <th>吐く（秒）</th>
+            <th>回数</th>
+            <th>記録日時</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        <tr th:each="record, iterStat : ${records}">
+            <td th:text="${iterStat.index + 1}"></td> <!-- 連番表示 -->
+            <td th:text="${record.inhaleSeconds}"></td>
+            <td th:text="${record.holdSeconds}"></td>
+            <td th:text="${record.exhaleSeconds}"></td>
+            <td th:text="${record.cycleCount}"></td>
+            <td th:text="${#temporals.format(record.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+            <td>
+                <a th:href="@{/breathing/timer/{id}(id=${record.id})}" class="timer-link">タイマーへ</a>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+</body>
+</html>

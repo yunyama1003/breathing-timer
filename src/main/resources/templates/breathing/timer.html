@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>呼吸タイマー</title>
+
+    <style>
+        body {
+            text-align: center;
+            font-family: sans-serif;
+            margin-top: 40px;
+        }
+
+        .circle-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 40px;
+        }
+
+        #breathingCircle {
+            width: 120px;
+            height: 120px;
+            background-color: #4a90e2;
+            border-radius: 50%;
+            transform: scale(1.0);
+        }
+
+        #phase {
+            margin-top: 20px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        #time {
+            font-size: 32px;
+            margin-top: 10px;
+        }
+
+        #cycle {
+            margin-top: 10px;
+        }
+
+        button {
+            margin-top: 30px;
+            font-size: 18px;
+            padding: 10px 30px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>呼吸タイマー</h1>
+
+<p id="cycle">サイクル: 0</p>
+<p id="phase">準備</p>
+<p id="time"></p>
+
+<button onclick="startBreathing()">スタート</button>
+
+<a th:href="@{/breathing/list}">一覧に戻る</a>
+
+<div class="circle-container">
+    <div id="breathingCircle"></div>
+</div>
+
+<script th:inline="javascript">
+/* ===== 呼吸設定（DBの値） ===== */
+const breathingSteps = [
+    { name: "吸う", seconds: [[${record.inhaleSeconds}]], scale: 1.5 },
+    { name: "止める", seconds: [[${record.holdSeconds}]], scale: 1.5 },
+    { name: "吐く", seconds: [[${record.exhaleSeconds}]], scale: 1.0 }
+];
+
+const cycleCount = [[${record.cycleCount}]];
+
+/* ===== 状態管理 ===== */
+let stepIndex = 0;
+let currentCycle = 1;
+let remainingTime = 0;
+let timerId = null;
+
+/* ===== DOM ===== */
+const circle = document.getElementById("breathingCircle");
+const phaseEl = document.getElementById("phase");
+const timeEl = document.getElementById("time");
+const cycleEl = document.getElementById("cycle");
+
+/* ===== 開始 ===== */
+function startBreathing() {
+    if (timerId !== null) return;
+
+    stepIndex = 0;
+    currentCycle = 1;
+    updateCycleLabel();
+    startStep();
+}
+
+/* ===== 表示更新 ===== */
+function updateCycleLabel() {
+    cycleEl.textContent = `サイクル: ${currentCycle} / ${cycleCount}`;
+}
+
+/* ===== 音声設定 ===== */
+const beepSound = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=");
+// ↑ 超短い無音ビープ（実際は任意の音声ファイルも可）
+
+/* ===== 1フェーズ開始 ===== */
+function startStep() {
+    const step = breathingSteps[stepIndex];
+
+    // フェーズ表示
+    phaseEl.textContent = step.name;
+    remainingTime = step.seconds;
+    timeEl.textContent = remainingTime;
+
+    // 音を鳴らす
+    beepSound.currentTime = 0;
+    beepSound.play().catch(e => console.log("音再生失敗:", e));
+
+    // 円アニメーション
+    circle.style.transition = `transform ${step.seconds}s linear`;
+    circle.style.transform = `scale(${step.scale})`;
+
+    timerId = setInterval(() => {
+        remainingTime--;
+        timeEl.textContent = remainingTime;
+
+        if (remainingTime <= 0) {
+            clearInterval(timerId);
+            timerId = null;
+            nextStep();
+        }
+    }, 1000);
+}
+
+
+/* ===== 次のフェーズ ===== */
+function nextStep() {
+    stepIndex++;
+
+    if (stepIndex >= breathingSteps.length) {
+        stepIndex = 0;
+        currentCycle++;
+
+        if (currentCycle > cycleCount) {
+            phaseEl.textContent = "完了 🎉";
+            timeEl.textContent = "";
+            return;
+        }
+
+        updateCycleLabel();
+    }
+
+    startStep();
+}
+</script>
+
+</body>
+</html>
