@@ -1,85 +1,129 @@
-# Breathing Timer（呼吸タイマーアプリ）
+# Breathing Timer
 
-呼吸法（吸う・止める・吐く）を設定・管理し、  
-タイマー形式で実行できる Spring Boot 製の Web アプリケーションです。
+シンプルな **呼吸トレーニング用タイマーアプリ** です。
 
-職業訓練校で学習した内容（Spring Boot / MVC / DB連携）の
-アウトプットとして作成しました。
-
----
-
-## アプリ概要
-
-- 呼吸設定（秒数）を登録・一覧表示
-- 一覧からタイマー画面へ遷移
-- Thymeleaf を使った画面表示
-- PostgreSQL によるデータ永続化
+吸う・止める・吐くのリズムを **視覚・音・カウント** でサポートし、
+リラックスや集中力向上を目的としています。
 
 ---
 
-## 使用技術
+## 🫁 主な機能
 
-| 分類 | 技術 |
-|----|----|
-| 言語 | Java 25 |
-| フレームワーク | Spring Boot |
-| テンプレートエンジン | Thymeleaf |
-| ORM | Spring Data JPA |
-| DB | PostgreSQL |
-| ビルドツール | Gradle |
-| バージョン管理 | Git / GitHub |
+* 呼吸フェーズ切り替え（吸う / 止める / 吐く）
+* カウントダウンタイマー表示
+* フェーズ切り替え時の効果音
+* スタート / ストップ / リセット操作
+* シンプルで見やすいUI
 
 ---
 
-## 画面構成
+## 🛠 使用技術
 
-- 呼吸設定一覧画面  
-- 呼吸設定登録画面  
-- タイマー画面  
+### フロントエンド
+
+* HTML / CSS
+* JavaScript（タイマー制御）
+
+### バックエンド
+
+* Java
+* Spring Boot
+* Thymeleaf
+
+### データベース
+
+* PostgreSQL
 
 ---
 
-## 機能一覧
+## 📂 ディレクトリ構成（一部）
 
-- 呼吸設定の登録
-- 呼吸設定の一覧表示
-- タイマー画面への遷移
-- DB からのデータ取得・保存
+```
+breathing-timer
+├─ src
+│  ├─ main
+│  │  ├─ java
+│  │  │  └─ com.example.breathing
+│  │  └─ resources
+│  │     ├─ templates
+│  │     │  └─ breathing
+│  │     │     └─ timer.html
+│  │     ├─ static
+│  │     │  └─ sound
+│  │     │     └─ change.mp3
+│  │     └─ application.properties.example
+```
 
 ---
 
-
-## 起動方法（ローカル環境）
+## 🚀 起動方法
 
 ### 1. リポジトリをクローン
 
-
+```bash
 git clone https://github.com/yunyama1003/breathing-timer.git
+cd breathing-timer
+```
 
+### 2. 設定ファイルを準備
 
-2. DB を用意
-PostgreSQL にデータベースを作成してください。
+```bash
+cp src/main/resources/application.properties.example \
+   src/main/resources/application-local.properties
+```
 
-CREATE DATABASE breathing;
+※ `application-local.properties` にDB接続情報を設定してください。
 
-3. 設定ファイルを作成
-以下のファイルを作成してください（※ GitHub には含めません）
+### 3. アプリ起動
 
-src/main/resources/application-local.properties
-
-中身を以下のように設定します。
-
-spring.datasource.url=jdbc:postgresql://localhost:5432/breathing
-spring.datasource.username=postgres
-spring.datasource.password=your_password
-
-4. アプリ起動
-Eclipse から BreathingApplication を実行
-または、プロジェクト直下で以下のコマンドを実行します。
-
+```bash
 ./gradlew bootRun
+```
 
-作成者
-名前：yamaguchi shun
+### 4. ブラウザでアクセス
 
-学習内容：Java / Spring Boot / Webアプリ開発
+```
+http://localhost:8080
+```
+
+---
+
+## 🔐 設定ファイルについて
+
+* `application.properties.example`
+
+  * Git管理対象（サンプル）
+* `application-local.properties`
+
+  * **Git管理外**（ローカル環境用）
+
+> 実DBの接続情報はGitHubに含めない運用をしています。
+
+---
+
+## 🎯 開発目的
+
+* Java / Spring Boot の理解深化
+* フロントエンドとバックエンドの連携学習
+* 実用的で小さなアプリを完成させる経験
+
+---
+
+## 📌 今後の拡張予定
+
+* 呼吸パターンのカスタマイズ
+* スマホ対応（レスポンシブ対応）
+* ログイン機能
+* 呼吸履歴の保存
+
+---
+
+## 👤 作者
+
+* GitHub: [yunyama1003](https://github.com/yunyama1003)
+
+---
+
+## 📄 ライセンス
+
+MIT License
