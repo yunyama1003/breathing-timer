@@ -51,32 +51,29 @@
 ## 起動方法（ローカル環境）
 
 ### 1. リポジトリをクローン
-```bash
+
 git clone https://github.com/（あなたのGitHub名）/breathing-timer.git
+
 ###2. DB を用意
 PostgreSQL にデータベースを作成してください。
 
-sql
-コードをコピーする
 CREATE DATABASE breathing;
+
 ###3. 設定ファイルを作成
 以下のファイルを作成してください（※ GitHub には含めません）
 
-css
-コードをコピーする
 src/main/resources/application-local.properties
-properties
-コードをコピーする
+
 spring.datasource.url=jdbc:postgresql://localhost:5432/breathing
 spring.datasource.username=postgres
 spring.datasource.password=your_password
+
 ###4. アプリ起動
 Eclipse から BreathingApplication を実行
 または以下のコマンドを実行します。
 
-bash
-コードをコピーする
 ./gradlew bootRun
+
 ##作成者
 名前：yamaguchi shun
 
