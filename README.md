@@ -55,6 +55,7 @@
 
 ```bash
 git clone https://github.com/（あなたのGitHub名）/breathing-timer.git
+```
 
 2. DB を用意
 
