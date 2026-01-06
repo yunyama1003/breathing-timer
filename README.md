@@ -54,7 +54,8 @@
 
 git clone https://github.com/（あなたのGitHub名）/breathing-timer.git
 
-###2. DB を用意
+2. DB を用意
+
 PostgreSQL にデータベースを作成してください。
 
 CREATE DATABASE breathing;
