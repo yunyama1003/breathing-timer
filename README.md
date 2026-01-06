@@ -53,8 +53,8 @@
 
 ### 1. リポジトリをクローン
 
-```bash
-git clone https://github.com/（あなたのGitHub名）/breathing-timer.git
+git clone https://github.com/your-github-username/breathing-timer.git
+
 2. DB を用意
 PostgreSQL にデータベースを作成してください。
 
