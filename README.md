@@ -53,7 +53,7 @@
 
 ### 1. リポジトリをクローン
 
-```bash
+
 git clone https://github.com/yunyama1003/breathing-timer.git
 
 
