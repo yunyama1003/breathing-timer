@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="ja" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>呼吸タイマー</title>
+	<head>
+	    <meta charset="UTF-8">
+	    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	    <title>呼吸タイマー</title>
+
 
     <style>
         body {
@@ -46,6 +48,34 @@
             font-size: 18px;
             padding: 10px 30px;
         }
+		@media (max-width: 600px) {
+		    body {
+		        margin-top: 0;
+		        height: 100vh;
+		        display: flex;
+		        flex-direction: column;
+		        justify-content: center;
+		    }
+
+		    #breathingCircle {
+		        width: 220px;
+		        height: 220px;
+		    }
+
+		    #phase {
+		        font-size: 28px;
+		    }
+
+		    #time {
+		        font-size: 48px;
+		    }
+
+		    button {
+		        font-size: 20px;
+		        padding: 14px 36px;
+		    }
+		}
+
     </style>
 </head>
 
@@ -57,7 +87,11 @@
 <p id="phase">準備</p>
 <p id="time"></p>
 
-<button onclick="startBreathing()">スタート</button>
+<button id="startBtn" onclick="startBreathing()">スタート</button>
+<button onclick="pauseBreathing()">一時停止</button>
+<button onclick="resetBreathing()">リセット</button>
+
+
 
 <a th:href="@{/breathing/list}">一覧に戻る</a>
 
@@ -66,60 +100,66 @@
 </div>
 
 <script th:inline="javascript">
-/* ===== 呼吸設定（DBの値） ===== */
+/* ===== 呼吸設定 ===== */
 const breathingSteps = [
-    { name: "吸う", seconds: [[${record.inhaleSeconds}]], scale: 1.5 },
-    { name: "止める", seconds: [[${record.holdSeconds}]], scale: 1.5 },
-    { name: "吐く", seconds: [[${record.exhaleSeconds}]], scale: 1.0 }
+    { name: "吸う", seconds: [[${record.inhaleSeconds}]], scale: 1.5, color: "#4a90e2" }, // 青
+    { name: "止める", seconds: [[${record.holdSeconds}]], scale: 1.5, color: "#f5a623" }, // オレンジ
+    { name: "吐く", seconds: [[${record.exhaleSeconds}]], scale: 1.0, color: "#7ed321" }  // 緑
 ];
 
 const cycleCount = [[${record.cycleCount}]];
 
-/* ===== 状態管理 ===== */
+/* ===== 状態 ===== */
 let stepIndex = 0;
 let currentCycle = 1;
 let remainingTime = 0;
 let timerId = null;
+let isRunning = false;
 
 /* ===== DOM ===== */
 const circle = document.getElementById("breathingCircle");
 const phaseEl = document.getElementById("phase");
 const timeEl = document.getElementById("time");
 const cycleEl = document.getElementById("cycle");
+const startBtn = document.getElementById("startBtn");
+const changeSound = new Audio("/sound/change.mp3");
 
-/* ===== 開始 ===== */
-function startBreathing() {
-    if (timerId !== null) return;
 
-    stepIndex = 0;
-    currentCycle = 1;
-    updateCycleLabel();
-    startStep();
-}
 
-/* ===== 表示更新 ===== */
+/* ===== 表示 ===== */
 function updateCycleLabel() {
     cycleEl.textContent = `サイクル: ${currentCycle} / ${cycleCount}`;
 }
 
-/* ===== 音声設定 ===== */
-const beepSound = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=");
-// ↑ 超短い無音ビープ（実際は任意の音声ファイルも可）
+/* ===== 開始 ===== */
+function startBreathing() {
+    if (isRunning) return;
 
-/* ===== 1フェーズ開始 ===== */
+    isRunning = true;
+    startBtn.textContent = "再開";
+
+    if (remainingTime === 0) {
+        stepIndex = 0;
+        currentCycle = 1;
+        updateCycleLabel();
+        startStep();
+    } else {
+        resumeStep();
+    }
+}
+
+
+/* ===== フェーズ開始 ===== */
 function startStep() {
     const step = breathingSteps[stepIndex];
 
-    // フェーズ表示
     phaseEl.textContent = step.name;
     remainingTime = step.seconds;
     timeEl.textContent = remainingTime;
+	circle.style.backgroundColor = step.color;
 
-    // 音を鳴らす
-    beepSound.currentTime = 0;
-    beepSound.play().catch(e => console.log("音再生失敗:", e));
 
-    // 円アニメーション
+    // アニメーション開始
     circle.style.transition = `transform ${step.seconds}s linear`;
     circle.style.transform = `scale(${step.scale})`;
 
@@ -135,9 +175,10 @@ function startStep() {
     }, 1000);
 }
 
-
-/* ===== 次のフェーズ ===== */
+/* ===== 次フェーズ ===== */
 function nextStep() {
+	changeSound.currentTime = 0;
+	    changeSound.play().catch(() => {});
     stepIndex++;
 
     if (stepIndex >= breathingSteps.length) {
@@ -147,15 +188,76 @@ function nextStep() {
         if (currentCycle > cycleCount) {
             phaseEl.textContent = "完了 🎉";
             timeEl.textContent = "";
+            isRunning = false;
             return;
-        }
+			startBtn.textContent = "スタート";
 
+        }
         updateCycleLabel();
     }
-
     startStep();
 }
+
+/* ===== 一時停止 ===== */
+function pauseBreathing() {
+    if (!isRunning) return;
+
+    clearInterval(timerId);
+    timerId = null;
+    isRunning = false;
+	
+	startBtn.textContent = "再開"; 
+
+    // 現在の大きさで止める
+    const computedScale = getComputedStyle(circle).transform;
+    circle.style.transition = "none";
+    circle.style.transform = computedScale;
+}
+
+/* ===== 再開 ===== */
+function resumeStep() {
+    const step = breathingSteps[stepIndex];
+
+    circle.style.transition = `transform ${remainingTime}s linear`;
+    circle.style.transform = `scale(${step.scale})`;
+
+	startBtn.textContent = "スタート"; 
+    isRunning = true;
+
+    timerId = setInterval(() => {
+        remainingTime--;
+        timeEl.textContent = remainingTime;
+
+        if (remainingTime <= 0) {
+            clearInterval(timerId);
+            timerId = null;
+            nextStep();
+        }
+    }, 1000);
+}
+
+/* ===== リセット ===== */
+function resetBreathing() {
+    clearInterval(timerId);
+    timerId = null;
+    isRunning = false;
+
+    stepIndex = 0;
+    currentCycle = 1;
+    remainingTime = 0;
+
+    phaseEl.textContent = "準備";
+    timeEl.textContent = "";
+    cycleEl.textContent = "サイクル: 0";
+	
+	startBtn.textContent = "スタート";
+
+    circle.style.transition = "none";
+    circle.style.transform = "scale(1.0)";
+	circle.style.backgroundColor = "#4a90e2";
+}
 </script>
+
 
 </body>
 </html>
