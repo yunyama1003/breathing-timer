@@ -83,7 +83,7 @@ cp src/main/resources/application.properties.example \
 ### 4. ブラウザでアクセス
 
 ```
-http://localhost:8080
+[http://localhost:8080](http://localhost:8080/breathing/list)
 ```
 
 ---
