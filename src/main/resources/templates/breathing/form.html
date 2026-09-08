@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>呼吸記録登録</title>
 
     <style>
@@ -56,24 +57,32 @@
 		    font-size: 0.9em;
 		    margin-top: 4px;
 		}
+        @media (max-width: 600px) {
+            body { padding: 20px 12px; }
+            form { padding: 20px; }
+        }
     </style>
 </head>
 <body>
 
 <h1>呼吸記録 登録</h1>
 
-<form th:action="@{/breathing/save}" method="post">
-    <label>吸う（秒）</label>
-    <input type="number" name="inhaleSeconds" required>
+<form th:action="@{/breathing/save}" th:object="${recordForm}" method="post">
+    <label for="inhaleSeconds">吸う（秒）</label>
+    <input type="number" th:field="*{inhaleSeconds}" required min="1" max="30" step="1" aria-describedby="inhaleSeconds-error">
+    <p id="inhaleSeconds-error" class="error" th:if="${#fields.hasErrors('inhaleSeconds')}" th:errors="*{inhaleSeconds}"></p>
 
-    <label>止める（秒）</label>
-    <input type="number" name="holdSeconds" required>
+    <label for="holdSeconds">止める（秒）</label>
+    <input type="number" th:field="*{holdSeconds}" required min="0" max="30" step="1" aria-describedby="holdSeconds-error">
+    <p id="holdSeconds-error" class="error" th:if="${#fields.hasErrors('holdSeconds')}" th:errors="*{holdSeconds}"></p>
 
-    <label>吐く（秒）</label>
-    <input type="number" name="exhaleSeconds" required>
+    <label for="exhaleSeconds">吐く（秒）</label>
+    <input type="number" th:field="*{exhaleSeconds}" required min="1" max="30" step="1" aria-describedby="exhaleSeconds-error">
+    <p id="exhaleSeconds-error" class="error" th:if="${#fields.hasErrors('exhaleSeconds')}" th:errors="*{exhaleSeconds}"></p>
 
-    <label>回数</label>
-    <input type="number" name="cycleCount" required>
+    <label for="cycleCount">回数</label>
+    <input type="number" th:field="*{cycleCount}" required min="1" max="20" step="1" aria-describedby="cycleCount-error">
+    <p id="cycleCount-error" class="error" th:if="${#fields.hasErrors('cycleCount')}" th:errors="*{cycleCount}"></p>
 
     <button type="submit">保存してタイマーへ</button>
 </form>

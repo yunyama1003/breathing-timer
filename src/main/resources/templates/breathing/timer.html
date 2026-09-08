@@ -48,6 +48,7 @@
             font-size: 18px;
             padding: 10px 30px;
         }
+		button:disabled { cursor: not-allowed; opacity: 0.6; }
 		@media (max-width: 600px) {
 		    body {
 		        margin-top: 0;
@@ -79,7 +80,8 @@
     </style>
 </head>
 
-<body>
+<body id="timerApp"
+      th:attr="data-inhale-seconds=${record.inhaleSeconds},data-hold-seconds=${record.holdSeconds},data-exhale-seconds=${record.exhaleSeconds},data-cycle-count=${record.cycleCount},data-sound-url=@{/sound/change.mp3}">
 
 <h1>呼吸タイマー</h1>
 
@@ -87,9 +89,10 @@
 <p id="phase">準備</p>
 <p id="time"></p>
 
-<button id="startBtn" onclick="startBreathing()">スタート</button>
-<button onclick="pauseBreathing()">一時停止</button>
-<button onclick="resetBreathing()">リセット</button>
+<button id="startBtn" type="button">スタート</button>
+<button id="pauseBtn" type="button" disabled>一時停止</button>
+<button id="resetBtn" type="button">リセット</button>
+<button id="soundBtn" type="button" aria-pressed="false">音: オン</button>
 
 
 
@@ -99,164 +102,7 @@
     <div id="breathingCircle"></div>
 </div>
 
-<script th:inline="javascript">
-/* ===== 呼吸設定 ===== */
-const breathingSteps = [
-    { name: "吸う", seconds: [[${record.inhaleSeconds}]], scale: 1.5, color: "#4a90e2" }, // 青
-    { name: "止める", seconds: [[${record.holdSeconds}]], scale: 1.5, color: "#f5a623" }, // オレンジ
-    { name: "吐く", seconds: [[${record.exhaleSeconds}]], scale: 1.0, color: "#7ed321" }  // 緑
-];
-
-const cycleCount = [[${record.cycleCount}]];
-
-/* ===== 状態 ===== */
-let stepIndex = 0;
-let currentCycle = 1;
-let remainingTime = 0;
-let timerId = null;
-let isRunning = false;
-
-/* ===== DOM ===== */
-const circle = document.getElementById("breathingCircle");
-const phaseEl = document.getElementById("phase");
-const timeEl = document.getElementById("time");
-const cycleEl = document.getElementById("cycle");
-const startBtn = document.getElementById("startBtn");
-const changeSound = new Audio("/sound/change.mp3");
-
-
-
-/* ===== 表示 ===== */
-function updateCycleLabel() {
-    cycleEl.textContent = `サイクル: ${currentCycle} / ${cycleCount}`;
-}
-
-/* ===== 開始 ===== */
-function startBreathing() {
-    if (isRunning) return;
-
-    isRunning = true;
-    startBtn.textContent = "再開";
-
-    if (remainingTime === 0) {
-        stepIndex = 0;
-        currentCycle = 1;
-        updateCycleLabel();
-        startStep();
-    } else {
-        resumeStep();
-    }
-}
-
-
-/* ===== フェーズ開始 ===== */
-function startStep() {
-    const step = breathingSteps[stepIndex];
-
-    phaseEl.textContent = step.name;
-    remainingTime = step.seconds;
-    timeEl.textContent = remainingTime;
-	circle.style.backgroundColor = step.color;
-
-
-    // アニメーション開始
-    circle.style.transition = `transform ${step.seconds}s linear`;
-    circle.style.transform = `scale(${step.scale})`;
-
-    timerId = setInterval(() => {
-        remainingTime--;
-        timeEl.textContent = remainingTime;
-
-        if (remainingTime <= 0) {
-            clearInterval(timerId);
-            timerId = null;
-            nextStep();
-        }
-    }, 1000);
-}
-
-/* ===== 次フェーズ ===== */
-function nextStep() {
-	changeSound.currentTime = 0;
-	    changeSound.play().catch(() => {});
-    stepIndex++;
-
-    if (stepIndex >= breathingSteps.length) {
-        stepIndex = 0;
-        currentCycle++;
-
-        if (currentCycle > cycleCount) {
-            phaseEl.textContent = "完了 🎉";
-            timeEl.textContent = "";
-            isRunning = false;
-            return;
-			startBtn.textContent = "スタート";
-
-        }
-        updateCycleLabel();
-    }
-    startStep();
-}
-
-/* ===== 一時停止 ===== */
-function pauseBreathing() {
-    if (!isRunning) return;
-
-    clearInterval(timerId);
-    timerId = null;
-    isRunning = false;
-	
-	startBtn.textContent = "再開"; 
-
-    // 現在の大きさで止める
-    const computedScale = getComputedStyle(circle).transform;
-    circle.style.transition = "none";
-    circle.style.transform = computedScale;
-}
-
-/* ===== 再開 ===== */
-function resumeStep() {
-    const step = breathingSteps[stepIndex];
-
-    circle.style.transition = `transform ${remainingTime}s linear`;
-    circle.style.transform = `scale(${step.scale})`;
-
-	startBtn.textContent = "スタート"; 
-    isRunning = true;
-
-    timerId = setInterval(() => {
-        remainingTime--;
-        timeEl.textContent = remainingTime;
-
-        if (remainingTime <= 0) {
-            clearInterval(timerId);
-            timerId = null;
-            nextStep();
-        }
-    }, 1000);
-}
-
-/* ===== リセット ===== */
-function resetBreathing() {
-    clearInterval(timerId);
-    timerId = null;
-    isRunning = false;
-
-    stepIndex = 0;
-    currentCycle = 1;
-    remainingTime = 0;
-
-    phaseEl.textContent = "準備";
-    timeEl.textContent = "";
-    cycleEl.textContent = "サイクル: 0";
-	
-	startBtn.textContent = "スタート";
-
-    circle.style.transition = "none";
-    circle.style.transform = "scale(1.0)";
-	circle.style.backgroundColor = "#4a90e2";
-}
-</script>
+<script th:src="@{/js/breathing-timer.js}"></script>
 
 
 </body>

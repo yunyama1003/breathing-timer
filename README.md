@@ -42,6 +42,7 @@
 ### データベース
 
 * PostgreSQL
+* Flyway（スキーマ管理）
 
 ---
 
@@ -74,22 +75,55 @@ git clone https://github.com/yunyama1003/breathing-timer.git
 cd breathing-timer
 ```
 
-### 2. 設定ファイルを準備
+### 2. 前提ソフトウェア
+
+* JDK 25
+* PostgreSQL
+* Node.js（JavaScriptテストを実行する場合）
+
+### 3. データベースと設定ファイルを準備
+
+PostgreSQLに開発用のデータベースとユーザーを作成し、そのユーザーにデータベースの権限を与えます。実際の名前やパスワードに置き換えてください。
+
+```sql
+CREATE USER breathing_user WITH PASSWORD 'change_me';
+CREATE DATABASE breathing OWNER breathing_user;
+```
 
 ```bash
 cp src/main/resources/application.properties.example \
    src/main/resources/application-local.properties
 ```
 
-※ `application-local.properties` にDB接続情報を設定してください。
+Windows PowerShellの場合:
 
-### 3. アプリ起動
+```powershell
+Copy-Item src/main/resources/application.properties.example src/main/resources/application-local.properties
+```
+
+`application-local.properties` の接続先を次のように設定します。
+
+```properties
+spring.datasource.url=jdbc:postgresql://localhost:5432/breathing
+spring.datasource.username=breathing_user
+spring.datasource.password=change_me
+```
+
+初回起動時にFlywayが `breathing_records` テーブルを作成します。既存DBへ導入する場合は、先にバックアップとスキーマ確認を行い、[改善実装・検証手順書](docs/improvement-procedure.md) の既存DB手順に従ってください。
+
+### 4. アプリ起動
 
 ```bash
 ./gradlew bootRun
 ```
 
-### 4. ブラウザでアクセス
+Windows PowerShellの場合:
+
+```powershell
+.\gradlew.bat bootRun
+```
+
+### 5. ブラウザでアクセス
 
 ```
 http://localhost:8080/breathing/list
@@ -107,6 +141,26 @@ http://localhost:8080/breathing/list
   * **Git管理外**（ローカル環境用）
 
 > 実DBの接続情報はGitHubに含めない運用をしています。
+
+---
+
+## ✅ テスト
+
+Javaの入力検証テスト:
+
+```bash
+./gradlew test
+```
+
+Windows PowerShellでは `.\gradlew.bat test` を使用します。
+
+タイマーのJavaScriptテスト:
+
+```bash
+node --test src/test/js/breathing-timer.test.js
+```
+
+空の検証用PostgreSQLを使うマイグレーション・永続化の受入確認は、[改善実装・検証手順書](docs/improvement-procedure.md) のAT-13を参照してください。個人用DBをテスト接続先に使用しないでください。
 
 ---
 

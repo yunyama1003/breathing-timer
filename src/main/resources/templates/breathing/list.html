@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>呼吸記録一覧</title>
 
     <style>
@@ -72,6 +73,12 @@
         .timer-link:hover {
             color: #357ab8;
         }
+        .table-container { overflow-x: auto; }
+        .empty-message { text-align: center; }
+        @media (max-width: 600px) {
+            body { padding: 20px 12px; }
+            th, td { padding: 10px; white-space: nowrap; }
+        }
     </style>
 </head>
 <body>
@@ -82,6 +89,8 @@
     <a th:href="@{/breathing/new}" class="new-button">新規記録</a>
 </div>
 
+<p class="empty-message" th:if="${#lists.isEmpty(records)}">記録がありません。「新規記録」から設定を登録してください。</p>
+<div class="table-container" th:unless="${#lists.isEmpty(records)}">
 <table>
     <thead>
         <tr>
@@ -109,6 +118,7 @@
         </tr>
     </tbody>
 </table>
+</div>
 
 </body>
 </html>

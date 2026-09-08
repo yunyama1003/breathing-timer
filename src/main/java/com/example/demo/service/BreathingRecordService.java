@@ -15,12 +15,12 @@ public class BreathingRecordService {
 
     private final BreathingRecordRepository repository;
 
-    public void save(BreathingRecord record) {
-        repository.save(record);
+    public BreathingRecord save(BreathingRecord record) {
+        return repository.save(record);
     }
 
     public List<BreathingRecord> findAllRecords() {
-        return repository.findAll();
+        return repository.findAllByOrderByCreatedAtDescIdDesc();
     }
     public BreathingRecord findLatest() {
         return repository.findTopByOrderByCreatedAtDesc();
