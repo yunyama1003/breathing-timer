@@ -32,7 +32,7 @@
             if (this.state !== "running") return;
             this.updateElapsed(this.clock());
             this.stopFrame();
-            this.state = "paused";
+            this.state = this.elapsedMs >= this.totalDurationMs ? "completed" : "paused";
             this.render();
         }
 

@@ -26,6 +26,7 @@ function fixture(holdMs = 0) {
         timer,
         view: () => latest,
         transitions: () => transitions,
+        elapse(ms) { now += ms; },
         advance(ms) { now += ms; const next = callback; callback = null; next(now); }
     };
 }
@@ -54,11 +55,21 @@ test("pause excludes time spent paused and resume continues precisely", () => {
     f.advance(400);
     f.timer.pause();
     assert.equal(f.view().state, "paused");
+    f.elapse(10000);
     f.timer.start();
     f.advance(599);
     assert.equal(f.view().phase, "吸う");
     f.advance(1);
     assert.equal(f.view().phase, "吐く");
+});
+
+test("pause at the end completes instead of wrapping to an extra cycle", () => {
+    const f = fixture(0);
+    f.timer.start();
+    f.elapse(2500);
+    f.timer.pause();
+    assert.equal(f.view().state, "completed");
+    assert.equal(f.view().cycle, 1);
 });
 
 test("reset and completed restart return to the first phase", () => {
