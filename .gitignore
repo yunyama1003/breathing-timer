@@ -39,3 +39,5 @@ out/
 # ローカル環境設定
 application-local.properties
 
+# H2ローカルデータ
+/data/

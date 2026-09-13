@@ -1,18 +1,15 @@
 spring.application.name=breathing
 
-# DB接続（例）
-spring.datasource.url=jdbc:postgresql://localhost:5432/your_db_name
-spring.datasource.username=your_username
-spring.datasource.password=your_password
-spring.datasource.driver-class-name=org.postgresql.Driver
+# H2ファイルデータベース（通常はapplication.propertiesのままで利用できます）
+spring.datasource.url=jdbc:h2:file:./data/breathing;DB_CLOSE_ON_EXIT=FALSE
+spring.datasource.username=sa
+spring.datasource.password=
+spring.datasource.driver-class-name=org.h2.Driver
 
-# JPA設定
-spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
-spring.jpa.show-sql=true
+# JPA/Flyway設定
+spring.jpa.show-sql=false
 spring.jpa.hibernate.ddl-auto=validate
-
-# SQLログ
-logging.level.org.hibernate.SQL=debug
+spring.jpa.open-in-view=false
 
 spring.messages.basename=messages
 spring.messages.encoding=UTF-8

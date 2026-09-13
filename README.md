@@ -41,7 +41,7 @@
 
 ### データベース
 
-* PostgreSQL
+* H2（アプリ内蔵・ファイル保存）
 * Flyway（スキーマ管理）
 
 ---
@@ -78,40 +78,11 @@ cd breathing-timer
 ### 2. 前提ソフトウェア
 
 * JDK 25
-* PostgreSQL
 * Node.js（JavaScriptテストを実行する場合）
 
-### 3. データベースと設定ファイルを準備
+データベースのインストールや接続設定は不要です。初回起動時にH2とFlywayが `data` フォルダと必要なテーブルを自動作成します。
 
-PostgreSQLに開発用のデータベースとユーザーを作成し、そのユーザーにデータベースの権限を与えます。実際の名前やパスワードに置き換えてください。
-
-```sql
-CREATE USER breathing_user WITH PASSWORD 'change_me';
-CREATE DATABASE breathing OWNER breathing_user;
-```
-
-```bash
-cp src/main/resources/application.properties.example \
-   src/main/resources/application-local.properties
-```
-
-Windows PowerShellの場合:
-
-```powershell
-Copy-Item src/main/resources/application.properties.example src/main/resources/application-local.properties
-```
-
-`application-local.properties` の接続先を次のように設定します。
-
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/breathing
-spring.datasource.username=breathing_user
-spring.datasource.password=change_me
-```
-
-初回起動時にFlywayが `breathing_records` テーブルを作成します。既存DBへ導入する場合は、先にバックアップとスキーマ確認を行い、[改善実装・検証手順書](docs/improvement-procedure.md) の既存DB手順に従ってください。
-
-### 4. アプリ起動
+### 3. アプリ起動
 
 ```bash
 ./gradlew bootRun
@@ -123,7 +94,7 @@ Windows PowerShellの場合:
 .\gradlew.bat bootRun
 ```
 
-### 5. ブラウザでアクセス
+### 4. ブラウザでアクセス
 
 ```
 http://localhost:8080/breathing/list
@@ -131,16 +102,9 @@ http://localhost:8080/breathing/list
 
 ---
 
-## 🔐 設定ファイルについて
+## 💾 データの保存場所
 
-* `application.properties.example`
-
-  * Git管理対象（サンプル）
-* `application-local.properties`
-
-  * **Git管理外**（ローカル環境用）
-
-> 実DBの接続情報はGitHubに含めない運用をしています。
+登録した設定はプロジェクト直下の `data` フォルダに保存されます。このフォルダはGit管理対象外です。データを初期化したい場合は、アプリを停止してから `data` フォルダを削除してください。
 
 ---
 
@@ -160,7 +124,7 @@ Windows PowerShellでは `.\gradlew.bat test` を使用します。
 node --test src/test/js/breathing-timer.test.js
 ```
 
-空の検証用PostgreSQLを使うマイグレーション・永続化の受入確認は、[改善実装・検証手順書](docs/improvement-procedure.md) のAT-13を参照してください。個人用DBをテスト接続先に使用しないでください。
+Javaテストではメモリ上のH2を使用するため、通常の `data` フォルダは変更されません。
 
 ---
 
