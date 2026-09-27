@@ -50,7 +50,7 @@ class BreathingRecordControllerTests {
         form.setInhaleSeconds(4);
         form.setHoldSeconds(0);
         form.setExhaleSeconds(6);
-        form.setCycleCount(5);
+        form.setCycleCount(60);
         return form;
     }
 }

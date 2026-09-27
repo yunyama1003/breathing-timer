@@ -17,16 +17,15 @@ class BreathingApplicationTests {
 
     @Test
     void acceptsBoundaryValues() {
-        BreathingRecordForm form = form(1, 0, 1, 1);
-        assertThat(validator.validate(form)).isEmpty();
-
-        form = form(30, 30, 30, 20);
-        assertThat(validator.validate(form)).isEmpty();
+        for (int cycles : new int[] {1, 20, 30, 60}) {
+            assertThat(validator.validate(form(1, 0, 1, cycles))).isEmpty();
+        }
+        assertThat(validator.validate(form(30, 30, 30, 60))).isEmpty();
     }
 
     @Test
     void rejectsValuesOutsideTheAllowedRange() {
-        Set<ConstraintViolation<BreathingRecordForm>> violations = validator.validate(form(0, -1, 31, 21));
+        Set<ConstraintViolation<BreathingRecordForm>> violations = validator.validate(form(0, -1, 31, 61));
         assertThat(violations).hasSize(4);
     }
 

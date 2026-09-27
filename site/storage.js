@@ -1,12 +1,12 @@
 (function (root) {
   'use strict';
   const KEY = 'breathing-timer.presets.v1';
-  const limits = { inhale: [1, 30], hold: [0, 30], exhale: [1, 30], cycles: [1, 20] };
+  const limits = { inhale: [1, 30], hold: [0, 30], exhale: [1, 30], cycles: [1, 60] };
   function validate(value) {
     if (!value || typeof value.name !== 'string' || !value.name.trim() || value.name.trim().length > 40) throw new Error('名前は1〜40文字で入力してください。');
     const result = { name: value.name.trim() };
     for (const [key, [min, max]] of Object.entries(limits)) {
-      if (!Number.isInteger(value[key]) || value[key] < min || value[key] > max) throw new Error('秒数は吸う・吐く1〜30、止める0〜30、回数1〜20の整数を指定してください。');
+      if (!Number.isInteger(value[key]) || value[key] < min || value[key] > max) throw new Error('秒数は吸う・吐く1〜30、止める0〜30、回数1〜60の整数を指定してください。');
       result[key] = value[key];
     }
     return result;

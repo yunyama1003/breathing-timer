@@ -47,7 +47,7 @@ public class BreathingRecord {
 
     @NotNull(message = "回数を入力してください")
     @Min(value = 1, message = "回数は1回以上で入力してください")
-    @Max(value = 20, message = "回数は20回以内で入力してください")
+    @Max(value = 60, message = "回数は60回以内で入力してください")
     @Column(name = "cycle_count", nullable = false)
     private Integer cycleCount;
 

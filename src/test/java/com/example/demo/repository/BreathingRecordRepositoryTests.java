@@ -22,11 +22,12 @@ class BreathingRecordRepositoryTests {
         record.setInhaleSeconds(4);
         record.setHoldSeconds(0);
         record.setExhaleSeconds(6);
-        record.setCycleCount(5);
+        record.setCycleCount(60);
 
         BreathingRecord saved = repository.saveAndFlush(record);
 
         assertThat(saved.getId()).isNotNull();
+        assertThat(saved.getCycleCount()).isEqualTo(60);
         assertThat(repository.findById(saved.getId())).contains(saved);
     }
 }

@@ -52,7 +52,7 @@
 | inhale_seconds | INTEGER、NOT NULL、1〜30 |
 | hold_seconds | INTEGER、NOT NULL、0〜30 |
 | exhale_seconds | INTEGER、NOT NULL、1〜30 |
-| cycle_count | INTEGER、NOT NULL、1〜20 |
+| cycle_count | INTEGER、NOT NULL、1〜60（既存のV1は1〜20、V2で上限を拡張） |
 | created_at | TIMESTAMP WITHOUT TIME ZONE、NOT NULL |
 
 4. `spring.jpa.hibernate.ddl-auto=validate` とする。サンプル設定も合わせる。
