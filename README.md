@@ -1,182 +1,57 @@
-# Breathing Timer
+# ひと呼吸 — Breathing Timer
 
-## スマホ版（PCの起動不要）
+「吸う・止める・吐く」秒数と回数を設定して使う、シンプルな呼吸タイマーです。スマートフォンやPCのブラウザで使えるPWA版と、ローカルで動かすSpring Boot版があります。両者の設定データは共有されません。
 
-スマホ用のPWAを `site/` に追加しました。設定はスマホ内に保存し、Java・H2・ログインを必要としません。PC版も引き続き利用できます。
+## PWA版を使う
 
-公開先: https://yunyama1003.github.io/breathing-timer/
+[公開アプリ（GitHub Pages）](https://yunyama1003.github.io/breathing-timer/)を開きます。PCでもスマートフォンでも利用でき、アプリ本体の利用にJavaやDBは不要です。iPhoneではSafariの共有メニューから「ホーム画面に追加」、Androidではブラウザのメニューから「アプリをインストール」または「ホーム画面に追加」を選べます。
 
-- iPhone: Safariで公開URLを開き、共有メニューから「ホーム画面に追加」。
-- Android: ブラウザのメニューから「アプリをインストール」または「ホーム画面に追加」。
-- 「スマホで使う・バックアップ」を開き、「オフライン利用の準備ができました」と表示された後は、キャッシュが残っている間オフラインで利用できます。
-- 画面を離れると一時停止します。ロック中のカウント・通知は保証しません。
-- 設定は端末・ブラウザごとに保存されます。バックアップの保存・読み込みを用意しています。PC版H2の設定は必要に応じて再登録してください。
-- アプリ自体は公開されますが、設定をサーバーへ送信しません。
+1. 「呼吸のリズム」で秒数・回数を入力するか、「リラックス 5分」の「この設定を使う」を押します。
+2. 設定を確認して「スタート」を押します。一時停止・リセット、音のオン／オフも利用できます。画面を離れるとタイマーは一時停止し、画面ロック中の進行や通知は保証しません。
+3. 必要なら「この設定を保存」を押します。「保存した設定」から呼び出せます。
 
-### PWAの開発・公開
+設定可能な範囲は次のとおりです。
+
+| 項目 | 範囲 |
+| --- | --- |
+| 吸う | 1〜30秒 |
+| 止める | 0〜30秒 |
+| 吐く | 1〜30秒 |
+| 回数 | 1〜60回 |
+
+おすすめの「リラックス 5分」は、吸う4秒・止める0秒・吐く6秒を30回繰り返す設定です（合計300秒）。「この設定を使う」はフォームと現在の設定表示を更新しますが、タイマーの開始や設定の保存は自動では行いません。各項目はその後も自由に変更できます。
+
+保存した設定はブラウザの `localStorage` に保持されます。「スマホで使う・バックアップ」からJSON形式でバックアップを保存・読み込みできます。設定は端末・ブラウザごとに独立しており、PWAからサーバーへ送信されません。
+
+PWAはService Workerでアプリのファイルをキャッシュします。画面内に「オフライン利用の準備ができました」と表示された後は、キャッシュとブラウザの保存データが残っている間、通信なしでも利用できます。更新が見えない場合はオンラインでページを再読み込みしてください。
+
+## Spring Boot版をローカルで使う
+
+Java 25、Spring Boot 4.0.1、Thymeleaf、H2、Flywayを使用します。呼吸設定を登録して一覧からタイマーを開けます。登録するのはタイマー開始前の**設定**であり、実施したセッションの履歴ではありません。PWA版の `localStorage` とは別に、プロジェクト直下の `data/breathing` を基にしたH2ファイルへ保存します。Flywayが初回起動時にスキーマを作成し、V2で回数上限を60回へ拡張します。PostgreSQLの準備は不要です。
+
+JDK 25を用意して、リポジトリのルートで実行します。
+
+```bash
+git clone https://github.com/yunyama1003/breathing-timer.git
+cd breathing-timer
+./gradlew bootRun
+```
+
+Windows PowerShellでは `./gradlew bootRun` の代わりに `.\gradlew.bat bootRun` を使います。起動後は <http://localhost:8080/breathing/list> を開いてください。H2の `data/` はGit管理対象外です。Spring Boot版は開発用のローカル構成で、認証やCSRF保護を有効にした公開運用向けの設定ではありません。
+
+## 開発・テスト
+
+Javaテストは `./gradlew test`（Windows: `.\gradlew.bat test`）で実行します。テスト用H2はメモリ上に作られ、通常の `data/` を変更しません。
+
+Node.jsを用意すると、PWA・タイマーのJavaScriptテストと公開用ファイルの生成を実行できます。
 
 ```bash
 node --test src/test/js/*.test.js
 node scripts/build-pwa.cjs
 ```
 
-生成した `build/pwa` をローカルHTTPサーバーで配信します。Service WorkerはHTTPSまたはlocalhostで動作します。GitHubのSettings → Pages → Sourceを **GitHub Actions** に設定すると、mainへの対象ファイルの変更で `.github/workflows/pages.yml` が自動公開します。公開物は `build/pwa` のみです。
+生成された `build/pwa` をローカルHTTPサーバーで配信するとPWAを確認できます。Service WorkerはHTTPSまたはlocalhostで動作します。公開時は `.github/workflows/pages.yml` が対象ファイルの `main` への変更を検知し、テスト・ビルド後にGitHub Pagesへ配置します。キャッシュ対象を変更するときは `site/sw.js` の `CACHE` バージョンも更新します。
 
-Service Workerのキャッシュを更新するときは、`site/sw.js` の `CACHE` バージョンを増やしてください。新バージョンはアプリの全タブを閉じて開き直すと適用されます。実機でオフラインを検証する場合は、準備完了後に機内モードへ切り替えてアプリを開き直してください。
+## 作者
 
-以下はPC版の説明です。
-
-シンプルな **呼吸トレーニング用タイマーアプリ** です。
-
-吸う・止める・吐くのリズムを **視覚・音・カウント** でサポートし、
-リラックスや集中力向上を目的としています。
-
----
-
-## 🫁 主な機能
-
-* 呼吸フェーズ切り替え（吸う / 止める / 吐く）
-* カウントダウンタイマー表示
-* フェーズ切り替え時の効果音
-* スタート / ストップ / リセット操作
-* シンプルで見やすいUI
-
----
-## 🎥 動作デモ
-
-以下の動画は、ローカル環境で実行した際のデモです。
-
-- タイマー開始
-- 呼吸フェーズの切り替え
-- カウントダウン表示
-- 効果音の再生
-
----
-## 🛠 使用技術
-
-### フロントエンド
-
-* HTML / CSS
-* JavaScript（タイマー制御）
-
-### バックエンド
-
-* Java
-* Spring Boot
-* Thymeleaf
-
-### データベース
-
-* H2（アプリ内蔵・ファイル保存）
-* Flyway（スキーマ管理）
-
----
-
-## 📂 ディレクトリ構成（一部）
-
-```
-breathing-timer
-├─ src
-│  ├─ main
-│  │  ├─ java
-│  │  │  └─ com.example.breathing
-│  │  └─ resources
-│  │     ├─ templates
-│  │     │  └─ breathing
-│  │     │     └─ timer.html
-│  │     ├─ static
-│  │     │  └─ sound
-│  │     │     └─ change.mp3
-│  │     └─ application.properties.example
-```
-
----
-
-## 🚀 起動方法
-
-### 1. リポジトリをクローン
-
-```bash
-git clone https://github.com/yunyama1003/breathing-timer.git
-cd breathing-timer
-```
-
-### 2. 前提ソフトウェア
-
-* JDK 25
-* Node.js（JavaScriptテストを実行する場合）
-
-データベースのインストールや接続設定は不要です。初回起動時にH2とFlywayが `data` フォルダと必要なテーブルを自動作成します。
-
-### 3. アプリ起動
-
-```bash
-./gradlew bootRun
-```
-
-Windows PowerShellの場合:
-
-```powershell
-.\gradlew.bat bootRun
-```
-
-### 4. ブラウザでアクセス
-
-```
-http://localhost:8080/breathing/list
-```
-
----
-
-## 💾 データの保存場所
-
-登録した設定はプロジェクト直下の `data` フォルダに保存されます。このフォルダはGit管理対象外です。データを初期化したい場合は、アプリを停止してから `data` フォルダを削除してください。
-
----
-
-## ✅ テスト
-
-Javaの入力検証テスト:
-
-```bash
-./gradlew test
-```
-
-Windows PowerShellでは `.\gradlew.bat test` を使用します。
-
-タイマーのJavaScriptテスト:
-
-```bash
-node --test src/test/js/breathing-timer.test.js
-```
-
-Javaテストではメモリ上のH2を使用するため、通常の `data` フォルダは変更されません。
-
----
-
-## 🎯 開発目的
-
-* Java / Spring Boot の理解深化
-* フロントエンドとバックエンドの連携学習
-* 実用的で小さなアプリを完成させる経験
-
----
-
-## 📌 今後の拡張予定
-
-* 呼吸パターンのカスタマイズ
-* スマホ対応（レスポンシブ対応）
-* ログイン機能
-* 呼吸履歴の保存
-
----
-
-## 👤 作者
-
-* GitHub: [yunyama1003](https://github.com/yunyama1003)
-
----
-
-## 📄 ライセンス
-
-MIT License
+[yunyama1003](https://github.com/yunyama1003)
