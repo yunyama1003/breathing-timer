@@ -2,6 +2,7 @@
 const $ = id => document.getElementById(id);
 const form = $('settings');
 let presets = [], timer, muted = false, audioContext, lastView;
+const recommendedPreset = { name: 'リラックス 5分', inhale: 4, hold: 0, exhale: 6, cycles: 30 };
 const message = text => { $('message').textContent = text; };
 function readForm() {
   const value = { name: $('name').value };
@@ -86,6 +87,11 @@ function updateDuration() {
   catch { $('duration').textContent = '秒数と回数を確認してください。'; }
 }
 form.addEventListener('input', updateDuration);
+$('use-recommended').addEventListener('click', () => {
+  for (const [key, value] of Object.entries(recommendedPreset)) $(key).value = value;
+  configure(); updateDuration(); message('「リラックス 5分」を選びました。');
+  $('start').focus();
+});
 form.addEventListener('submit', event => {
   event.preventDefault();
   try { const preset = readForm(); writePresets([preset, ...presets]); configure(); message('この端末に保存しました。'); }

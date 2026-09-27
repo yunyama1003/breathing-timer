@@ -28,6 +28,10 @@
   </section>
   <section class="panel">
     <h2>呼吸のリズム</h2><p class="hint">無理のない秒数で。止める時間は0秒にもできます。</p>
+    <div class="recommendation" aria-label="おすすめの呼吸設定">
+      <div><span class="recommendation-tag">おすすめ</span><strong>リラックス 5分</strong><small>吸う 4秒 · 止める 0秒 · 吐く 6秒 · 30回</small></div>
+      <button type="button" id="use-recommended" data-use>この設定を使う</button>
+    </div>
     <form id="settings">
       <fieldset id="fields"><legend class="sr-only">呼吸設定</legend>
         <label class="wide" for="name">設定の名前<input id="name" name="name" maxlength="40" value="いつもの呼吸" required></label>

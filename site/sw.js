@@ -1,5 +1,5 @@
 'use strict';
-const CACHE = 'breathing-pwa-v2';
+const CACHE = 'breathing-pwa-v3';
 const FILES = ['./', './index.html', './style.css', './storage.js', './app.js', './breathing-timer.js', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES)));
