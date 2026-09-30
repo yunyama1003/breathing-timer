@@ -7,7 +7,7 @@ const vm = require('node:vm');
 test('updated worker activates and refreshes navigation while retaining offline fallback', async () => {
   const handlers = {}, cacheEntries = new Map();
   const cache = {
-    addAll: async files => { assert.ok(files.includes('./app.js?v=4')); assert.ok(files.includes('./style.css?v=4')); },
+    addAll: async files => { assert.ok(files.includes('./app.js?v=5')); assert.ok(files.includes('./breathing-timer.js?v=5')); },
     match: async key => cacheEntries.get(key),
     put: async (key, value) => cacheEntries.set(key, value)
   };

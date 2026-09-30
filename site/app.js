@@ -4,6 +4,7 @@ const form = $('settings');
 let presets = [], timer, muted = false, audioContext, lastView;
 const recommendedPreset = { name: 'リラックス 5分', inhale: 4, hold: 0, exhale: 6, cycles: 30 };
 const message = text => { $('message').textContent = text; };
+const wakeLock = new ScreenWakeLock(() => message('画面の点灯維持を利用できません。画面を開いたままにしてください。'));
 function readForm() {
   const value = { name: $('name').value };
   for (const key of ['inhale', 'hold', 'exhale', 'cycles']) value[key] = $(''+key).value === '' ? NaN : Number($(key).value);
@@ -18,6 +19,10 @@ function beep() {
   gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.22);
   oscillator.start(); oscillator.stop(audioContext.currentTime + 0.23);
 }
+function completionBeep() {
+  if (muted) return;
+  try { playCompletionTone(audioContext); } catch { /* 音声失敗は完了を妨げない */ }
+}
 function unlockAudio() {
   try {
     const Audio = window.AudioContext || window.webkitAudioContext;
@@ -25,6 +30,7 @@ function unlockAudio() {
   } catch { /* 音が使えなくてもタイマーは動作する */ }
 }
 function render(view) {
+  wakeLock.setRunning(view.state === 'running');
   if (lastView?.phase !== view.phase) $('phase').textContent = view.phase;
   $('seconds').textContent = view.remainingSeconds ?? '—';
   $('cycle').textContent = view.cycle ? `${view.cycle} / ${view.totalCycles} 回` : '準備ができたら、スタート';
@@ -47,7 +53,7 @@ function configure() {
       { name: '吸う', durationMs: config.inhale * 1000, fromScale: 1, toScale: 1.5, color: '#9ab9a7' },
       { name: '止める', durationMs: config.hold * 1000, fromScale: 1.5, toScale: 1.5, color: '#d8be8b' },
       { name: '吐く', durationMs: config.exhale * 1000, fromScale: 1.5, toScale: 1, color: '#abc3c0' }
-    ], onRender: render, onTransition: beep });
+    ], onRender: render, onTransition: beep, onComplete: completionBeep });
 }
 function writePresets(next) {
   if (next.length > 100) throw new Error('保存できる設定は100件までです。');
@@ -100,6 +106,7 @@ form.addEventListener('submit', event => {
 $('start').addEventListener('click', () => {
   try {
     if (timer?.state !== 'paused') { if (!form.reportValidity()) return; configure(); }
+    if ($('message').textContent.startsWith('画面の点灯維持を利用できません')) message('');
     unlockAudio(); timer.start();
   } catch (error) { message(error.message); }
 });

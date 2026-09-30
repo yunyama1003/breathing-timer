@@ -10,6 +10,7 @@
             this.cancel = options.cancel || (id => cancelAnimationFrame(id));
             this.onRender = options.onRender || (() => {});
             this.onTransition = options.onTransition || (() => {});
+            this.onComplete = options.onComplete || (() => {});
             this.cycleDurationMs = this.steps.reduce((sum, step) => sum + step.durationMs, 0);
             this.totalDurationMs = this.cycleDurationMs * this.cycleCount;
             this.state = "ready";
@@ -32,8 +33,8 @@
             if (this.state !== "running") return;
             this.updateElapsed(this.clock());
             this.stopFrame();
-            this.state = this.elapsedMs >= this.totalDurationMs ? "completed" : "paused";
-            this.render();
+            if (this.elapsedMs >= this.totalDurationMs) this.complete();
+            else { this.state = "paused"; this.render(); }
         }
 
         reset() {
@@ -48,10 +49,7 @@
             if (this.state !== "running") return;
             this.updateElapsed(now);
             if (this.elapsedMs >= this.totalDurationMs) {
-                this.elapsedMs = this.totalDurationMs;
-                this.state = "completed";
-                this.stopFrame();
-                this.render();
+                this.complete();
                 return;
             }
             this.render();
@@ -62,6 +60,15 @@
             this.elapsedMs = Math.min(this.totalDurationMs,
                 this.elapsedMs + Math.max(0, now - this.startedAt));
             this.startedAt = now;
+        }
+
+        complete() {
+            if (this.state === "completed") return;
+            this.elapsedMs = this.totalDurationMs;
+            this.state = "completed";
+            this.stopFrame();
+            this.render();
+            this.onComplete();
         }
 
         position() {
@@ -109,6 +116,76 @@
         }
     }
 
+    class ScreenWakeLock {
+        constructor(onUnavailable = () => {}, wakeLock = global.navigator?.wakeLock,
+                    isVisible = () => !global.document?.hidden) {
+            this.onUnavailable = onUnavailable;
+            this.wakeLock = wakeLock;
+            this.isVisible = isVisible;
+            this.wanted = false;
+            this.sentinel = null;
+            this.requesting = false;
+            this.generation = 0;
+            this.retries = 0;
+        }
+
+        setRunning(running) {
+            if (this.wanted === running) return;
+            this.wanted = running;
+            this.generation++;
+            if (running) {
+                this.retries = 0;
+                this.acquire(this.generation);
+            } else if (this.sentinel) {
+                const sentinel = this.sentinel;
+                this.sentinel = null;
+                sentinel.release().catch(() => {});
+            }
+        }
+
+        async acquire(generation) {
+            if (!this.wanted || !this.isVisible() || this.sentinel || this.requesting) return;
+            if (!this.wakeLock?.request) { this.onUnavailable(); return; }
+            this.requesting = true;
+            let sentinel;
+            try { sentinel = await this.wakeLock.request("screen"); }
+            catch { if (this.wanted && generation === this.generation) this.onUnavailable(); }
+            finally { this.requesting = false; }
+            if (!sentinel) {
+                if (this.wanted && generation !== this.generation) this.acquire(this.generation);
+                return;
+            }
+            if (!this.wanted || generation !== this.generation || !this.isVisible()) {
+                sentinel.release().catch(() => {});
+                if (this.wanted && generation !== this.generation) this.acquire(this.generation);
+                return;
+            }
+            this.sentinel = sentinel;
+            sentinel.addEventListener("release", () => {
+                if (this.sentinel !== sentinel) return;
+                this.sentinel = null;
+                if (this.wanted && this.isVisible() && this.retries++ < 1) this.acquire(this.generation);
+                else if (this.wanted && this.isVisible()) this.onUnavailable();
+            });
+        }
+    }
+
+    function playCompletionTone(context) {
+        if (!context || context.state !== "running") return;
+        for (const [frequency, delay] of [[523, 0], [784, 0.2]]) {
+            const oscillator = context.createOscillator();
+            const gain = context.createGain();
+            oscillator.connect(gain);
+            gain.connect(context.destination);
+            oscillator.frequency.value = frequency;
+            gain.gain.setValueAtTime(0.0001, context.currentTime + delay);
+            gain.gain.linearRampToValueAtTime(0.05, context.currentTime + delay + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + delay + 0.32);
+            oscillator.start(context.currentTime + delay);
+            oscillator.stop(context.currentTime + delay + 0.33);
+        }
+    }
+
     function initialize() {
         const root = document.getElementById("timerApp");
         if (!root) return;
@@ -121,6 +198,19 @@
         const soundButton = document.getElementById("soundBtn");
         const sound = new Audio(root.dataset.soundUrl);
         let muted = false;
+        let audioContext;
+        const wakeLock = new ScreenWakeLock(() => {
+            document.getElementById("wakeLockStatus").textContent = "画面の点灯維持を利用できません。画面を開いたままにしてください。";
+        });
+        function unlockCompletionAudio() {
+            try {
+                const AudioContext = global.AudioContext || global.webkitAudioContext;
+                if (!muted && AudioContext) {
+                    audioContext ||= new AudioContext();
+                    audioContext.resume().catch(() => {});
+                }
+            } catch { /* 音が使えなくてもタイマーは動作する */ }
+        }
         const timer = new BreathingTimer({
             cycleCount: Number(root.dataset.cycleCount),
             steps: [
@@ -133,7 +223,12 @@
                 sound.currentTime = 0;
                 sound.play().catch(() => {});
             },
+            onComplete: () => {
+                if (muted) return;
+                try { playCompletionTone(audioContext); } catch { /* 音声失敗は完了を妨げない */ }
+            },
             onRender: view => {
+                wakeLock.setRunning(view.state === "running");
                 phase.textContent = view.phase;
                 time.textContent = view.remainingSeconds === null ? "" : view.remainingSeconds;
                 cycle.textContent = view.cycle === 0 ? "サイクル: 0" : `サイクル: ${view.cycle} / ${view.totalCycles}`;
@@ -144,7 +239,11 @@
                 pause.disabled = view.state !== "running";
             }
         });
-        start.addEventListener("click", () => timer.start());
+        start.addEventListener("click", () => {
+            document.getElementById("wakeLockStatus").textContent = "";
+            unlockCompletionAudio();
+            timer.start();
+        });
         pause.addEventListener("click", () => timer.pause());
         document.getElementById("resetBtn").addEventListener("click", () => timer.reset());
         soundButton.addEventListener("click", () => {
@@ -155,8 +254,11 @@
         document.addEventListener("visibilitychange", () => {
             if (document.hidden) timer.pause();
         });
+        global.addEventListener("pagehide", () => timer.pause());
     }
 
     global.BreathingTimer = BreathingTimer;
+    global.ScreenWakeLock = ScreenWakeLock;
+    global.playCompletionTone = playCompletionTone;
     if (typeof document !== "undefined") document.addEventListener("DOMContentLoaded", initialize);
 })(typeof globalThis !== "undefined" ? globalThis : this);

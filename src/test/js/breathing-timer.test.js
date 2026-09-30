@@ -9,6 +9,7 @@ function fixture(holdMs = 0) {
     let callback = null;
     let latest = null;
     let transitions = 0;
+    let completions = 0;
     const timer = new BreathingTimer({
         cycleCount: 1,
         steps: [
@@ -20,12 +21,14 @@ function fixture(holdMs = 0) {
         schedule: next => { callback = next; return 1; },
         cancel: () => { callback = null; },
         onRender: view => { latest = view; },
-        onTransition: () => { transitions += 1; }
+        onTransition: () => { transitions += 1; },
+        onComplete: () => { completions += 1; }
     });
     return {
         timer,
         view: () => latest,
         transitions: () => transitions,
+        completions: () => completions,
         elapse(ms) { now += ms; },
         advance(ms) { now += ms; const next = callback; callback = null; next(now); }
     };
@@ -39,6 +42,8 @@ test("skips a zero-second hold and completes in two seconds", () => {
     assert.equal(f.transitions(), 1);
     f.advance(1000);
     assert.equal(f.view().state, "completed");
+    assert.equal(f.completions(), 1);
+    assert.equal(f.transitions(), 1);
 });
 
 test("uses actual elapsed time after a delayed update", () => {
@@ -47,6 +52,18 @@ test("uses actual elapsed time after a delayed update", () => {
     f.advance(2500);
     assert.equal(f.view().phase, "吐く");
     assert.equal(f.view().remainingSeconds, 1);
+});
+
+test("a delayed update past the end emits completion once without another phase sound", () => {
+    const f = fixture(1000);
+    f.timer.start();
+    f.advance(4000);
+    assert.equal(f.view().state, "completed");
+    assert.equal(f.completions(), 1);
+    assert.equal(f.transitions(), 0);
+    f.timer.pause();
+    f.timer.reset();
+    assert.equal(f.completions(), 1);
 });
 
 test("pause excludes time spent paused and resume continues precisely", () => {
@@ -70,6 +87,7 @@ test("pause at the end completes instead of wrapping to an extra cycle", () => {
     f.timer.pause();
     assert.equal(f.view().state, "completed");
     assert.equal(f.view().cycle, 1);
+    assert.equal(f.completions(), 1);
 });
 
 test("reset and completed restart return to the first phase", () => {
@@ -79,6 +97,8 @@ test("reset and completed restart return to the first phase", () => {
     assert.equal(f.view().state, "completed");
     f.timer.start();
     assert.equal(f.view().phase, "吸う");
+    f.advance(2000);
+    assert.equal(f.completions(), 2);
     f.timer.reset();
     assert.equal(f.view().state, "ready");
     assert.equal(f.view().cycle, 0);

@@ -27,7 +27,7 @@ test('recommended preset fills the form and current selection without saving or 
     document: { getElementById: element, addEventListener() {}, querySelectorAll: () => [] },
     window: { addEventListener() {} }, navigator: {},
     localStorage: { getItem: () => null, setItem: () => { saves++; } },
-    PresetStorage, BreathingTimer: Timer
+    PresetStorage, BreathingTimer: Timer, ScreenWakeLock: class { setRunning() {} }
   };
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../../../site/app.js'), 'utf8'), context);
   element('use-recommended').listeners.click();
